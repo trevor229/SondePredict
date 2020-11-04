@@ -1,5 +1,5 @@
 # SondePredict - A fork of the CUSF Predictor Wrapper
-![main_image](https://github.com/trevor229/SondePredict/main_image.png)
+![main_image](https://github.com/trevor229/SondePredict/blob/master/main_image.png)
 
 This is a modified version of the CUSF Predictor Wrapper, which features a somewhat improved web UI, custom icons, and a few new features. This fork is targeted primarily at US based users who wish to predict the flight paths of National Weather Service radiosondes.
 
