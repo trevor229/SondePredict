@@ -62,7 +62,7 @@ $ cp pred ../../apps/
 ```
 ---
 ## 3. Configuration
-There are variables within `sonde_predict.sh` and `index.html` that *must* be changedbefore running, as well as some optional ones that you can change if you like. Look at [this page in the wiki for details](https://github.com/trevor229/SondePredict/wiki/Configuration).
+There are variables within `sonde_predict.sh` and `index.html` that *must* be changed before running, as well as some optional ones that you can change if you like. Look at [this page in the wiki for details](https://github.com/trevor229/SondePredict/wiki/Configuration).
 
 **Don't forget to make the `sonde_predict.sh` script executable!**
 
@@ -74,6 +74,8 @@ $ sudo chmod +x sonde_predict.sh
 ## 4. Setting up the webpage
 Copy the contents of the `web` folder to a directory that can be served by your favorite web server
   * By default, `sonde_predict.sh` copies the `sonde_predictions.json` file to `/var/www/html` so if you do not have your `index.html` and `static` directory there then make sure to change the `cp` command in `sonde_predict.sh` to reflect your chosen location.
+
+* Dont forget to change the required variables in `index.html`!
 
 ---
 ## 5. Setting up automatic predictions
@@ -98,13 +100,13 @@ Save and close the file. Next, create the systemd timer
 ```
 $ sudo nano /etc/systemd/system/sondepredict.timer
 ```
-And add the following. Note the `OnUnitActive` time is 3 hours. This is the interval which should be kept for new GFS data to be downloaded without unnessicarily downloading and rerunning the predictor.
+And add the following. Note the `OnUnitActive` time is 6 hours. This is the interval which should be kept for new GFS data to be downloaded without unnessicarily downloading and rerunning the predictor.
 ```
 [Unit]
 Description=SondePredict Service
 
 [Timer]
-OnUnitActiveSec=10800s
+OnUnitActiveSec=21600s
 OnBootSec=10s
 
 [Install]
@@ -119,7 +121,7 @@ $ sudo systemctl start sondepredict.timer
 ```
 ---
 ## 6. (Recommended) Running once to test/startup
-Running the `sonde_predict.sh` script once even after enabling/starting the systemd service is reccomended to ensure your configuration is correct and to also give the web application a valid `sonde_predictions.json` file to load (The map will not display itself without one!)
+Running the `sonde_predict.sh` script once even after enabling/starting the systemd service is recommended to ensure your configuration is correct and to also give the web application a valid `sonde_predictions.json` file to load (The map will not display itself without one!)
 
 Just go to your `SondePredict/apps` directory, and run it
 
