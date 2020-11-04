@@ -24,18 +24,19 @@ from cusfpredict.utils import *
 
 # Predictor Parameters
 PRED_BINARY = "./pred"
-GFS_PATH = "./gfs/"
+GFS_PATH = "./gfs"
 
 # Launch Parameters
-LAUNCH_TIME = "11:15Z" # This can be anything that dateutil can parse. The time *must* be in UTC.
+# If you are using sonde_predict.sh and are in the US, you won't have to worry about any of these
+LAUNCH_TIME = "00:00Z" # This can be anything that dateutil can parse. The time *must* be in UTC.
 LAUNCH_STEP = 12 # Time step, in hours, between launch predictions.
 LAUNCH_TIME_LIMIT = 168 # Predict out this many hours into the future
-LAUNCH_LAT = -34.9499
-LAUNCH_LON = 138.5194
-LAUNCH_ALT = 0.0
+LAUNCH_LAT = 0.0
+LAUNCH_LON = 0.0
+LAUNCH_ALT = 0
 ASCENT_RATE = 5.0
-DESCENT_RATE = 6.0
-BURST_ALT = 26000.0
+DESCENT_RATE = 5.0
+BURST_ALT = 30000.0
 
 # Read in command line arguments.
 parser = argparse.ArgumentParser()
@@ -110,8 +111,8 @@ for _delta_time in launch_time_variations:
 		continue
 
 	# Generate a descriptive comment for the track and placemark.
-	pred_time_string = _launch_time.strftime("%Y%m%d-%H%M")
-	pred_comment = "%s %.1f/%.1f/%.1f" % (pred_time_string, ASCENT_RATE, BURST_ALT, DESCENT_RATE)
+	pred_time_string = _launch_time.strftime("%Y-%m-%d-%H%MZ")
+	pred_comment = "%s,%.1f,%.1f" % (pred_time_string, ASCENT_RATE, DESCENT_RATE)
 
 	# Add the track and placemark to our list of predictions
 	predictions.append(flight_path_to_geometry(flight_path, comment=pred_comment))

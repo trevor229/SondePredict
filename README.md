@@ -1,26 +1,34 @@
-# CUSF Standalone Predictor - Python Wrapper
-This is a semi-fork of the [CUSF Standalone Predictor](https://github.com/jonsowman/cusf-standalone-predictor/), which provides a Python wrapper around the predictor binary, and provides a means of gathering the requisite wind data.
+# SondePredict - A fork of the CUSF Predictor Wrapper
 
-2018-02 Update: Wind downloader updated to use the [NOMADS GRIB Filter](http://nomads.ncep.noaa.gov/txt_descriptions/grib_filter_doc.shtml), as the OpenDAP interface stopped working. As such, we no longer require PyDAP, but we do now require GDAL to read in the GRIB2 files.
+This is a modified version of the CUSF Predictor Wrapper, which features a somewhat improved web UI, custom icons, and a few new features. This fork is targeted primarily at US based users who wish to predict the flight paths of National Weather Service radiosondes.
 
+## Reasons for changes
+------
+
+I personally found the original [CUSF Standalone Predictor](https://github.com/jonsowman/cusf-standalone-predictor/) difficult to setup and could not get it to work properly. In addition, the software is over 10 years old now, which is where most of the difficulty comes from. 
+
+The forked [CUSF Predictor Wrapper](https://github.com/darksidelemm/cusf_predictor_wrapper) is better, but still has some shortcomings and poor features. 
+
+
+## This version is linux only! The main scripts do not support Windows/OSX. Sorry!
+
+## Setup
+------
 ## 1. Install the Python Wrapper
 Clone this repository with:
 ```
-$ git clone https://github.com/darksidelemm/cusf_predictor_wrapper.git
+$ git clone https://github.com/trevor229/SondePredict.git
 ```
 
 The wind data downloader script depends on python-gdal, which needs gdal installed.
 GDAL may need to be installed separately using the system package manager, for example:
 ```
 Debian/Ubuntu: apt-get install python-gdal
-OSX (Macports): port install gdal +grib
-Windows (Anaconda Python): conda install gdal
 ```
-Note that on Windows you also need to install the [Visual C++ 2008 Redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=26368&ranMID=24542&ranEAID=TnL5HPStwNw&ranSiteID=TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA&tduid=(01174a65b485bdf3885d3de68395d4e3)(256380)(2459594)(TnL5HPStwNw-LlmdBk4XVrcPuOVDR8ONKA)()) for GDAL to import in Python correctly.
 
 The custpredict python package can then be installed in the usual Python way:
 ```
-$ cd cusf_predictor_wrapper
+$ cd SondePredict
 $ sudo python setup.py install
 ```
 
@@ -29,8 +37,7 @@ This should grab the other required Python dependencies, but if not, they are:
  * shapely
  * fastkml
  * python-gdal (which may have been installed via apt-get previously)
-
-
+---
 ## 2. Building the Predictor
 The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
 You may need to install `cmake` and `libglib2.0-dev` via your package manager before building, i.e.
@@ -48,123 +55,102 @@ $ cmake ../
 $ make
 ```
 
-
-The `pred` binary then needs to be copied into the 'apps' directory, or somewhere else useful, i.e.
+The `pred` binary then needs to be copied into the 'apps' directory for SondePredict to work
 ```
 $ cp pred ../../apps/
 ```
+---
+## 3. Configuration
+There are variables within `sonde_predict.sh` and `index.html` that *must* be changedbefore running, as well as some optional ones that you can change if you like. Look at [this page in the wiki for details](https://github.com/trevor229/SondePredict/wiki/Configuration).
 
-A pre-compiled Windows binary of the predictor is available here: http://rfhead.net/horus/cusf_standalone_predictor.zip
-Use at your own risk!
-
-## 3. Getting Wind Data
-The predictor binary uses a custom wind data format, extracted from NOAA's Global Forecast System wind models. The `get_wind_data.py` Python script pulls down and formats the relevant data from NOAA's [NOMADS](http://nomads.ncep.noaa.gov) server.
-
-An example of running `get_wind_data.py` is as follows:
-```
-$ python get_wind_data.py --lat=-33 --lon=139 --latdelta=10 --londelta=10 -f 24 -m 0p50 -o gfs
-```
-The command line arguments are as follows:
-```
-Area of interest:
-     --lat       Latitude (Decimal Degrees) of the centre of the area to gather.
-     --lon         Longitude (Decimal Degrees) of the centre of the area to gather.
-     --latdelta    Gather data from lat+/-latdelta
-     --londelta    Gather data from lon+/-londelta
-
-   Time of interest:
-     -f X   Gather data up to X hours into the future, from the start of the most recent model. (Note that this can be up to 8 hours in the past.) Make sure you get enough for the flight!   
-   
-   GFS Model Choice:
-     -m <model>    Choose between either:
-           0p50  - 0.5 Degree Spatial, 3-hour Time Resolution
-           0p25_1hr - 0.25 Degree Spatial, 1-hour Time Resolution (default)
-
-   Other settings:
-     -v  Verbose output
-     -o output_dir     (Where to save the gfs data to, defaults to ./gfs/)
-```
-
-The higher resolution wind model you choose, the larger the amount of data to download, and the longer it will take. It also increases the prediction calculation time (though not significantly).
-
-`wind_grabber.sh` is an example script to automatically grab wind data first to a temporary directory, and then to the final gfs directory. This could be run from a cronjob to keep the wind data up-to-date.
-
-New wind models become available approximately every 6 hours, approximately 4 hours after the model's nominal time (i.e. the 00Z model becomes available around 04Z). Information on the status of the GFS model generation is available here: http://www.nco.ncep.noaa.gov/pmb/nwprod/prodstat_new/
-
-## 4. Using the Predictor
-
-The basic usage of the predictor is as follows:
-```
-import datetime
-from cusfpredict.predict import Predictor
-
-pred = Predictor(bin_path='./pred', gfs_path='./gfs')
-
-flight_path = pred.predict(
-    launch_lat=-34.9499,
-    launch_lon=138.5194,
-    launch_alt=0.0,
-    ascent_rate=5.0,
-    descent_rate=5.0,
-    burst_alt=30000,
-    launch_time=datetime.datetime.utcnow()
-    )
+**Don't forget to make the `sonde_predict.sh` script executable!**
 
 ```
-
-Note that the launch time is a datetime object interpreted as UTC, so make sure you convert your launch time as appropriate.
-
-The output is a list-of-lists, containing entries of [utctimestamp, lat, lon, alt], i.e.:
-
-```
->>> flight_path
-[[1516702953, -34.9471, 138.517, 250.0], [1516703003, -34.9436, 138.514, 500.0], <etc>, [1516703053, -34.9415, 138.513, 750.0]]
+$ sudo chmod +x sonde_predict.sh
 ```
 
-There is also a command-line utility, `predict.py`, which allows performing predictions with launch parameter variations:
-```
-usage: predict.py [-h] [-a ASCENTRATE] [-d DESCENTRATE] [-b BURSTALT]
-                  [--launchalt LAUNCHALT] [--latitude LATITUDE]
-                  [--longitude LONGITUDE] [--time TIME] [-o OUTPUT]
-                  [--altitude_deltas ALTITUDE_DELTAS]
-                  [--time_deltas TIME_DELTAS] [--absolute]
+---
+## 4. Setting up the webpage
+Copy the contents of the `web` folder to a directory that can be served by your favorite web server
+  * By default, `sonde_predict.sh` copies the `sonde_predictions.json` file to `/var/www/html` so if you do not have your `index.html` and `static` directory there then make sure to change the `cp` command in `sonde_predict.sh` to reflect your chosen location.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -a ASCENTRATE, --ascentrate ASCENTRATE
-                        Ascent Rate (m/s). Default 5m/s
-  -d DESCENTRATE, --descentrate DESCENTRATE
-                        Descent Rate (m/s). Default 5m/s
-  -b BURSTALT, --burstalt BURSTALT
-                        Burst Altitude (m). Default 30000m
-  --launchalt LAUNCHALT
-                        Launch Altitude (m). Default 0m
-  --latitude LATITUDE   Launch Latitude (dd.dddd)
-  --longitude LONGITUDE
-                        Launch Longitude (dd.dddd)
-  --time TIME           Launch Time (string, UTC). Default = Now
-  -o OUTPUT, --output OUTPUT
-                        Output KML File. Default = prediction.kml
-  --altitude_deltas ALTITUDE_DELTAS
-                        Comma-delimited list of altitude deltas. (metres).
-  --time_deltas TIME_DELTAS
-                        Comma-delimited list of time deltas. (hours)
-  --absolute            Show absolute altitudes for tracks and placemarks.
-```
+---
+## 5. Setting up automatic predictions
+I opted to used systemd for this since I can never seem to get cron to work. 
 
-For example, to predict a radiosonde launch from Adelaide Airport (5m/s ascent, 26km burst, 7.5m/s descent), but to look at what happens if the burst altitude is higher or lower than usual:
+Create the systemd service file
 ```
-$ python predict.py --latitude=-34.9499 --longitude=138.5194 -a 5 -d 7.5 -b 26000 --time "2018-01-27 11:15Z" --altitude_deltas="-2000,0,2000"
-Running using GFS Model: gfs20180127-00z
-2018-01-27T11:15:00+00:00 5.0/24000.0/7.5 - Landing: -34.8585, 138.9600 at 2018-01-27T13:03:33
-2018-01-27T11:15:00+00:00 5.0/26000.0/7.5 - Landing: -34.8587, 138.8870 at 2018-01-27T13:11:01
-2018-01-27T11:15:00+00:00 5.0/28000.0/7.5 - Landing: -34.8598, 138.7990 at 2018-01-27T13:18:22
-KML written to prediction.kml
+$ sudo nano /etc/systemd/system/sondepredict.service
 ```
+Then add the following, making sure to change `WorkingDirectory` and `ExecStart` to the location of where the `SondePredict` directory is.
+```
+[Unit]
+Description=SondePredict Service
 
-A few other example scripts are located in the 'apps' directory:
- * basic_usage.py - Example showing how to write a predicted flight path out to a KML file
- * sonde_predict.py - A more complex example, where predictions for the next week's of radiosonde flights are run and written to a KML file.
+[Service]
+Type=oneshot
+WorkingDirectory=<YOUR_WORKING_DIR_HERE>/SondePredict/apps
+ExecStart=<YOUR_PATH_HERE>/SondePredict/apps/sonde_predict.sh
+```
+Save and close the file. Next, create the systemd timer
 
+```
+$ sudo nano /etc/systemd/system/sondepredict.timer
+```
+And add the following. Note the `OnUnitActive` time is 3 hours. This is the interval which should be kept for new GFS data to be downloaded without unnessicarily downloading and rerunning the predictor.
+```
+[Unit]
+Description=SondePredict Service
+
+[Timer]
+OnUnitActiveSec=10800s
+OnBootSec=10s
+
+[Install]
+WantedBy=timers.target
+```
+Save and close. Make sure to reload the daemon. Then enable and start the timer.
+
+```
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable sondepredict.timer
+$ sudo systemctl start sondepredict.timer
+```
+---
+## 6. (Recommended) Running once to test/startup
+Running the `sonde_predict.sh` script once even after enabling/starting the systemd service is reccomended to ensure your configuration is correct and to also give the web application a valid `sonde_predictions.json` file to load (The map will not display itself without one!)
+
+Just go to your `SondePredict/apps` directory, and run it
+
+```
+$ ./sonde_predict.sh
+```
+If everything is working, you should see an output similar to this
+```
+INFO:root:Testing Model: 20201104/06
+INFO:root:Testing Model: 20201104/00
+INFO:root:Found valid data in model 20201104/00!
+INFO:root:Created temporary directory /tmp/tmpoYn4JA
+INFO:root:Starting download of wind data...
+INFO:root:GRIB request took 4.4 seconds.
+INFO:root:Downloaded data for T+000
+INFO:root:Processing GRIB file...
+INFO:root:GFS data written to: /tmp/tmpoYn4JA/gfs_1604448000_41.0_270.0_10.0_10.0.dat
+...
+INFO:root:Downloaded data for T+048
+INFO:root:Processing GRIB file...
+INFO:root:GFS data written to: /tmp/tmpoYn4JA/gfs_1604620800_41.0_270.0_10.0_10.0.dat
+INFO:root:Writing out dataset info.
+INFO:root:Finished!
+Prediction Run: 2020-11-04-0000Z,5.0,5.0
+Prediction Run: 2020-11-04-1200Z,5.0,5.0
+Prediction Run: 2020-11-05-0000Z,5.0,5.0
+Prediction Run: 2020-11-05-1200Z,5.0,5.0
+```
+---
+## Copyrights
+The original [CUSF Predictor Wrapper](https://github.com/darksidelemm/cusf_predictor_wrapper) software is [licensed under the GNU General Public License v3.0](https://github.com/darksidelemm/cusf_predictor_wrapper/blob/master/LICENSE). As such this fork is also under the same license
+
+The SVG icons located in the `/apps/web/static/images` folder were created by me and are hereby also licensed under the GNU General Public License v3.0
 
 
