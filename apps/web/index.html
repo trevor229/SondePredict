@@ -1,209 +1,267 @@
 <html>
+
 <head>
     <title>Radiosonde Predictions</title>
-    
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> 
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/leaflet.js"></script>
-    <script src='https://unpkg.com/leaflet.gridlayer.googlemutant@0.10.0/Leaflet.GoogleMutant.js'></script>
+    <script src="https://unpkg.com/leaflet.gridlayer.googlemutant@0.10.0/Leaflet.GoogleMutant.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="./static/leaflet.polylineDecorator.js"></script>
     <link rel="stylesheet" href="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.css" />
     <script src="https://ppete2.github.io/Leaflet.PolylineMeasure/Leaflet.PolylineMeasure.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
-      div#pred_header {
-        padding-left: 10px;
-        margin-top: 15px;
-        margin-bottom: 15px;
-      }
+        div#pred_header {
+            padding-left: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+            width: 100vw;
+        }
+
+        @media screen and (min-width: 800px) {
+            html,
+            body,
+            #map {
+                padding-bottom: 40px;
+            }
+        }
+
     </style>
 
     <script language="javascript">
-      function init() {
+        function init() {
 
-          // VARIABLES YOU MIGHT NEED TO CHANGE!
-      
-          // Page title - This is pre-pended with the site name (defined in an argument to sonde_predict.py)
-          var prediction_title = " Radiosonde Predictions";
+            var prediction_title = " Radiosonde Predictions"
 
-          // Map Centre Coordinates
-          var map_centre_lat = 0.0;
-          var map_centre_lon = 0.0;
-          var map_centre_zoom = 8;
+            // Set map params to use. Used as defaults if autolocation is disabled.
+            // These coordinates are the geographic center of the USA
+            var map_centre_lat = 39.8333;
+            var map_centre_lon = -98.5833;
+            var map_centre_zoom = 5;
 
-          // Your home location. Shows marker on map if enabled.
-          var home_lat = 0.0;
-          var home_long = 0.0;
-          var home_icon_enable = false;
+            var autolocation_enable = true;
 
-          // Prediction JSON file. 
-          var prediction_json = './sonde_predictions.json';
+            // Zoom level of map when location is found
+            var autolocate_zoom = 8;
 
+            var prediction_json = './sonde_predictions.json'
+            
+            // Define custom leaflet icon for home location
+            var homeIcon = L.icon({
+                iconUrl: `./static/images/star-marker.svg`,
+                iconSize: [35, 35],
+                iconAnchor: [18, 35],
+                popupAnchor: [0,-35]
+            });
 
-          // Define custom leaflet icon for home location
-          var homeIcon = L.icon({
-              iconUrl: `./static/images/star-marker.svg`,
-              iconSize: [35, 35],
-              iconAnchor: [18, 35],
-              popupAnchor: [0,-35]
-          });
+            // Define custom leaflet icon for balloon burst locations
+            var burstIcon = L.icon({
+                iconUrl: `./static/images/burst.svg`,
+                iconSize: [25, 25],
+                tooltipAnchor: [0,-10],
+                popupAnchor: [0,-10]
+            })
 
-          // Define custom leaflet icon for balloon burst locations
-          var burstIcon = L.icon({
-              iconUrl: `./static/images/burst.svg`,
-              iconSize: [25, 25],
-              tooltipAnchor: [0,-10],
-              popupAnchor: [0,-10]
-          })
+            // Define custom leaflet icon for landing locations. Max predictions GFS model can make with 2x daily launches is 16.
 
-          // Define custom leaflet icon for landing locations. Max predictions GFS model can make with 2x daily launches is 16.
+            var landingSiteIcons = [
+            number1 = L.icon({iconUrl: `./static/images/1.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number2 = L.icon({iconUrl: `./static/images/2.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number3 = L.icon({iconUrl: `./static/images/3.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number4 = L.icon({iconUrl: `./static/images/4.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number5 = L.icon({iconUrl: `./static/images/5.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number6 = L.icon({iconUrl: `./static/images/6.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number7 = L.icon({iconUrl: `./static/images/7.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number8 = L.icon({iconUrl: `./static/images/8.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number9 = L.icon({iconUrl: `./static/images/9.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number10 = L.icon({iconUrl: `./static/images/10.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number11 = L.icon({iconUrl: `./static/images/11.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number12 = L.icon({iconUrl: `./static/images/12.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number13 = L.icon({iconUrl: `./static/images/13.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number14 = L.icon({iconUrl: `./static/images/14.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number15 = L.icon({iconUrl: `./static/images/15.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
+            number16 = L.icon({iconUrl: `./static/images/16.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]})
+            ]
+            
+            // Rest of the code...
 
-          var landingSiteIcons = [
-          number1 = L.icon({iconUrl: `./static/images/1.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number2 = L.icon({iconUrl: `./static/images/2.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number3 = L.icon({iconUrl: `./static/images/3.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number4 = L.icon({iconUrl: `./static/images/4.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number5 = L.icon({iconUrl: `./static/images/5.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number6 = L.icon({iconUrl: `./static/images/6.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number7 = L.icon({iconUrl: `./static/images/7.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number8 = L.icon({iconUrl: `./static/images/8.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number9 = L.icon({iconUrl: `./static/images/9.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number10 = L.icon({iconUrl: `./static/images/10.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number11 = L.icon({iconUrl: `./static/images/11.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number12 = L.icon({iconUrl: `./static/images/12.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number13 = L.icon({iconUrl: `./static/images/13.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number14 = L.icon({iconUrl: `./static/images/14.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number15 = L.icon({iconUrl: `./static/images/15.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]}),
-          number16 = L.icon({iconUrl: `./static/images/16.svg`, iconSize: [35, 35], iconAnchor: [18, 35], popupAnchor: [0,-35]})
-          ]
-        
-          // Rest of the code...
+            // Create a new leafletjs map
+            var map = L.map('map');
 
-          var map = L.map('map');
+            // Define OpenStreetMap layer for leaflet
+            var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
 
-          // Define OpenStreetMap layer for leaflet
-          var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          }).addTo(map);
+            // Define ESRI map layer for leaflet
+            var esri_sat_map = L.tileLayer(
+                'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
+                {
+                    maxZoom: 18,
+                });
 
-          // Define ESRI map layer for leaflet
-          var esri_sat_map = L.tileLayer(
-              'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
-              {
-                  maxZoom: 18,
-              });
+            // Add the polyLineMeasure plugin to the map
+            L.control.polylineMeasure({
+                position: 'topleft',
+                // Can be metres, landmiles, or nauticalmiles
+                unit: 'landmiles',
+                showClearControl: true,
+                showUnitControl: true
+            }).addTo(map);
 
-          // Add the polyLineMeasure plugin to the map
-          L.control.polylineMeasure({
-            position: 'topleft',
-            // Can be metres, landmiles, or nauticalmiles
-            unit: 'landmiles',
-            showClearControl: true,
-            showUnitControl: true
-          }).addTo(map);
+            $.ajax({
+                url: prediction_json,
+                dataType: 'json',
+                async: true,
+                success: function(data) {
+                    // Update the header.
+                    $("#pred_header").html("<h1>" + data.site + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
 
-          $.ajax({
-              url: prediction_json,
-              dataType: 'json',
-              async: true,
-                success: function(data){
-                  // Update the header.
-                  $("#pred_header").html("<h1>" + data.site + prediction_title + " <small>Dataset: " + data.dataset + "</small></h1>");
+                    // Get a sorted list of prediction timestamps //
 
-                  // Get a sorted list of prediction timestamps //
+                    // Initialize array for holding data from JSON
+                    var pred_names = [];
 
-                  // Initialize array for holding data from JSON
-                  var pred_names = []; 
+                    // Loop through the items in the predictions arary in the JSON
+                    for (_pred in data.predictions) {
 
-                  // Loop through the items in the predictions arary in the JSON
-                  for (_pred in data.predictions){
-
-                    // Append each data entry to our new array
-                    pred_names.push(_pred);
-                  }
-                  // Sort array in this case based upon time/date
-                  pred_names.sort()
-
-                  // Object containing each prediction layer.
-                  var predLayers = {}; 
-
-                  // Extend layer bounds for map
-                  var layerBounds = new L.LatLngBounds();
-                  layerBounds.extend(centre_spot);
-
-                  // Defines line that shows which is first I guess. Starts from path one and goes in order. Will be elimintated.
-                  var predictionMovement = new L.polyline([],{
-                    opacity: 0.5,
-                    color:'green'
-                  });
-                  
-                  // Add home marker if enabled
-                  if (home_icon_enable) {
-                    new L.marker([home_lat, home_long], {icon: homeIcon}).addTo(map).bindPopup("Home Location");
-                  }
-
-                  // Main Loop for creating prediction paths //
-
-                  // Define array of points and altitudes where balloon bursts
-                  var burstArr = [];
-
-                  // Iterate over the predictions
-                  for(i = 0; i < pred_names.length; i++){
-
-                    // Grab prediction data.
-                    var current_pred_name = pred_names[i];
-                    var current_pred = data.predictions[pred_names[i]];
-                    var current_pred_path = current_pred.path;
-                    // Extend the map coverage area to cover the predicted landing area.
-                    var landing_lat_lng = current_pred_path[current_pred_path.length - 1];
-                    layerBounds.extend(landing_lat_lng);
-                    predictionMovement.addLatLng(landing_lat_lng);
-
-                    let curPath = data.predictions[pred_names[i]].path;
-    
-                    let index = 0;
-                    let largest = curPath[0][2];
-                    for (j = 1; j < curPath.length; j++) {
-                        if (curPath[j][2] > largest) {
-                            index = j;
-                            largest = curPath[j][2];
-                        }
+                        // Append each data entry to our new array
+                        pred_names.push(_pred);
                     }
-                    
-                    // Add burst location markers to map
-                    new L.marker([curPath[index][0],curPath[index][1]], {icon: burstIcon}).addTo(map).bindPopup("<center>" + "Burst Altitude: " + largest + "m" + "<br>" + `${curPath[index][0]},${curPath[index][1]}` + "</center>");
+                    // Sort array in this case based upon time/date
+                    pred_names.sort()
 
-                    // Split the prediction name by comma to make the popups look nice. Naming convention is from sonde_predict.py
-                    var popupStringArr = current_pred_name.split(",");
+                    // Object containing each prediction layer.
+                    var predLayers = {};
 
-                    // Create a new layer group containing the landing marker, and the path and add it to our list of layers.
-                    predLayers[current_pred_name] = new L.layerGroup()
-                      .addLayer(
-                        new L.marker(current_pred_path[current_pred_path.length - 1], {icon: landingSiteIcons[i]})
-                        .bindPopup("<center>Time: " + popupStringArr[0] + "<br>" + "Asc. Rate: " + popupStringArr[1] + "m/s" + " | " + "Desc. Rate: " + popupStringArr[2] + "m/s" + "<br>" + current_pred_path[current_pred_path.length - 1].toString().split(",", 2)+ "</center>")
-                      ).addLayer(
-                        new L.polyline(current_pred_path)
-                        .bindPopup("<center>Time: " + popupStringArr[0] + "<br>" + "Asc. Rate: " + popupStringArr[1] + "m/s" + " | " + "Desc. Rate: " + popupStringArr[2] + "m/s" + "</center>")
-                      )
-                      .addTo(map);
-                  }
-                  map.fitBounds(layerBounds);
-                  
-                  // Add OSM and ESRI map layers as well as our predictions to the map
-                  map.addControl(new L.Control.Layers({'OSM':osm, 'ESRI Satellite':esri_sat_map}, predLayers));
+                    // Extend layer bounds for map
+                    var layerBounds = new L.LatLngBounds();
+                    layerBounds.extend(centre_spot);
 
-                  // Set default map view lat/long and zoom level. Moved to down here because if called too quick, the values will not be applied.
-                  var centre_spot = new L.LatLng(map_centre_lat, map_centre_lon);
-                  map.setView(centre_spot, map_centre_zoom);
+                    // Autolocation routine 
+
+                    if (autolocation_enable) {
+                        
+                        // Ask for location permission and set location on map & zoom
+                        map.locate({setView: true, maxZoom: autolocate_zoom});
+
+                        // Puts marker at current user location
+                        function onLocationFound(e) {
+                            L.marker(e.latlng, {icon: homeIcon}).addTo(map).bindPopup("Your Location").openPopup();
+                        }
+
+                        // Listens for if user grants location access
+                        map.on('locationfound', onLocationFound);
+                        
+                        // If theres a location error
+						function onLocationError(e) {
+
+                            // Alert the error
+                            alert(e.message);
+
+                            // Set the map to fallback to the center of the USA and zoom to fit
+                            var _fallback = new L.LatLng(39.8333, -98.5833);
+                            var _fallback_zoom = 5;
+                            map.setView(_fallback, _fallback_zoom);
+						}
+
+                        // Listen for any errors in getting location
+                        map.on('locationerror', onLocationError);
+                        
+                    }
+
+
+                    // Main Loop for creating prediction paths //
+
+                    // Define array of points and altitudes where balloon bursts
+                    var burstArr = [];
+
+                    // Iterate over the predictions
+                    for (i = 0; i < pred_names.length; i++) {
+
+                        // Grab prediction data.
+                        var current_pred_name = pred_names[i];
+                        var current_pred = data.predictions[pred_names[i]];
+                        var current_pred_path = current_pred.path;
+                        // Extend the map coverage area to cover the predicted landing area.
+                        var landing_lat_lng = current_pred_path[current_pred_path.length - 1];
+                        layerBounds.extend(landing_lat_lng);
+
+                        let curPath = data.predictions[pred_names[i]].path;
+
+                        let index = 0;
+                        let largest = curPath[0][2];
+                        for (j = 1; j < curPath.length; j++) {
+                            if (curPath[j][2] > largest) {
+                                index = j;
+                                largest = curPath[j][2];
+                            }
+                        }
+
+                        // Add burst location markers to map
+                        new L.marker([curPath[index][0], curPath[index][1]], {
+                            icon: burstIcon
+                        }).addTo(map).bindPopup("<center>" + "Burst Altitude: " + largest + "m" + "<br>" + `${curPath[index][0]},${curPath[index][1]}` + "</center>");
+
+                        // Split the prediction name by comma to make the popups look nice. Naming convention is from sonde_predict.py
+                        var popupStringArr = current_pred_name.split(",");
+
+                        // Create a new layer group containing the landing marker, and the path and add it to our list of layers.
+                        predLayers[current_pred_name] = new L.layerGroup()
+                            .addLayer(
+                                new L.marker(current_pred_path[current_pred_path.length - 1], {
+                                    icon: landingSiteIcons[i]
+                                })
+                                .bindPopup("<center>Launch Time: " + popupStringArr[0] + "<br>" + "Asc. Rate: " + popupStringArr[1] + "m/s" + " | " + "Desc. Rate: " + popupStringArr[2] + "m/s" + "<br>" + current_pred_path[current_pred_path.length - 1].toString().split(",", 2) + "</center>")
+                            ).addLayer(
+                                new L.polyline(current_pred_path)
+                                .bindPopup("<center>Launch Time: " + popupStringArr[0] + "<br>" + "Asc. Rate: " + popupStringArr[1] + "m/s" + " | " + "Desc. Rate: " + popupStringArr[2] + "m/s" + "</center>")
+                            )
+                            .addTo(map);
+                    }
+                    map.fitBounds(layerBounds);
+
+                    // Add OSM and ESRI map layers as well as our predictions to the map
+                    map.addControl(new L.Control.Layers({
+                        'OSM': osm,
+                        'ESRI Satellite': esri_sat_map
+                    }, predLayers));
+
+                    // Set default map view lat/long and zoom level. Moved to down here because if called too quick, the values will not be applied.
+                    var centre_spot = new L.LatLng(map_centre_lat, map_centre_lon);
+                    map.setView(centre_spot, map_centre_zoom);
                 }
-          });
+            });
         }
+
     </script>
 
 </head>
+
 <body onLoad="javascript:init();">
-  <div id="pred_header"></div>
-  <div id="map" style="height: 800px"></div>
-</body>            
+    <div id="pred_header"></div>
+    <div id="map"></div>
+    <script>
+        if (window.matchMedia("(max-width: 767px)").matches) {
+            // The viewport is less than 768 pixels wide
+            document.getElementById("pred_header").setAttribute("hidden", true);
+        }
+
+    </script>
+</body>
+
 </html>

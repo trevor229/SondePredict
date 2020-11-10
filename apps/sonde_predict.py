@@ -28,6 +28,7 @@ GFS_PATH = "./gfs"
 
 # Launch Parameters
 # If you are using sonde_predict.sh and are in the US, you won't have to worry about any of these
+
 LAUNCH_TIME = "00:00Z" # This can be anything that dateutil can parse. The time *must* be in UTC.
 LAUNCH_STEP = 12 # Time step, in hours, between launch predictions.
 LAUNCH_TIME_LIMIT = 168 # Predict out this many hours into the future

@@ -27,7 +27,7 @@ GDAL may need to be installed separately using the system package manager, for e
 Debian/Ubuntu: apt-get install python-gdal
 ```
 
-The custpredict python package can then be installed in the usual Python way:
+The SondePredict python package can then be installed in the usual Python way:
 ```
 $ cd SondePredict
 $ sudo python setup.py install
@@ -36,8 +36,11 @@ $ sudo python setup.py install
 This should grab the other required Python dependencies, but if not, they are:
  * python-dateutil
  * shapely
- * fastkml
- * python-gdal (which may have been installed via apt-get previously)
+ * fastkml (python-fastkml)
+ * python-gdal (Which may have been installed via apt-get previously)
+ * tabulate
+ * geopy
+ * smtplib
 ---
 ## 2. Building the Predictor
 The predictor itself is a binary ('pred'), which we (currently) build seperately, using CMake.
@@ -62,7 +65,7 @@ $ cp pred ../../apps/
 ```
 ---
 ## 3. Configuration
-There are variables within `sonde_predict.sh` and `index.html` that *must* be changed before running, as well as some optional ones that you can change if you like. Look at [this page in the wiki for details](https://github.com/trevor229/SondePredict/wiki/Configuration).
+There are variables within `sonde_predict.sh` and `index.html` that *must* be changed before running, as well as some optional ones in others. Look at [this page in the wiki for details](https://github.com/trevor229/SondePredict/wiki/Configuration).
 
 **Don't forget to make the `sonde_predict.sh` script executable!**
 
@@ -72,14 +75,17 @@ $ sudo chmod +x sonde_predict.sh
 
 ---
 ## 4. Setting up the webpage
-Copy the contents of the `web` folder to a directory that can be served by your favorite web server
-  * By default, `sonde_predict.sh` copies the `sonde_predictions.json` file to `/var/www/html` so if you do not have your `index.html` and `static` directory there then make sure to change the `cp` command in `sonde_predict.sh` to reflect your chosen location.
+Copy the contents of the `web` folder to a directory that can be served by your favorite web server.
 
-* Dont forget to change the required variables in `index.html`!
+  * If running apache for example, copy both `static` and `index.html` to `/var/www/html` 
+
+  * By default, `sonde_predict.sh` copies the `sonde_predictions.json` file to `/var/www/html/` so if you do not have your page there then make sure to change the `cp` command in `sonde_predict.sh` to reflect your chosen location.
+
+***A note on the geolocation option:*** If the autolocation feature is enabled, when you load the main page it will ask for your current location. If you deny permission, it will zoom out to the continental US and not show you your location. If you agree, it will plot your current location on the map and zoom to a suitable level. This allows you to find your local launch site more easily as well as use the PolyLineMeasure tool much easier.
 
 ---
 ## 5. Setting up automatic predictions
-I opted to used systemd for this since I can never seem to get cron to work. 
+I opted to use systemd for this since I can never seem to get cron to work. 
 
 Create the systemd service file
 ```
@@ -150,6 +156,12 @@ Prediction Run: 2020-11-04-1200Z,5.0,5.0
 Prediction Run: 2020-11-05-0000Z,5.0,5.0
 Prediction Run: 2020-11-05-1200Z,5.0,5.0
 ```
+---
+## To-Do
+- [x] Email notifications
+- [ ] Multi-location launch predictions & plotting
+- [ ] Discord integration?
+
 ---
 ## Copyrights
 The original [CUSF Predictor Wrapper](https://github.com/darksidelemm/cusf_predictor_wrapper) software is [licensed under the GNU General Public License v3.0](https://github.com/darksidelemm/cusf_predictor_wrapper/blob/master/LICENSE). As such this fork is also under the same license
