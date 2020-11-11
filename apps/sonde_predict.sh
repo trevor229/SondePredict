@@ -28,7 +28,7 @@ LAUNCH_SITE_STR="TEST"
 # Time of first daily launch. Must be in UTC. 23:00Z for NWS launches.
 LAUNCH_START_TIME="23:00Z"
 
-# Time between launches, starting at LAUNCH_START_TIME. Default is 12 for NWS launches (Twice a day at 00z and 12z)
+# Time between launches, starting at LAUNCH_START_TIME. Default is 12 for NWS launches (Twice a day at 23z and 11z)
 LAUNCH_STEP=12
 
 # Area to grab data for. +/- 10 degrees is usually plenty!
