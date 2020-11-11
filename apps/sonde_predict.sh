@@ -25,8 +25,8 @@ LAUNCH_LON=0.0
 # Launch site name. Usually a callsign of the WFO
 LAUNCH_SITE_STR="TEST"
 
-# Time of first daily launch. Must be in UTC. Default is 00:00Z for NWS launches
-LAUNCH_START_TIME="00:00Z"
+# Time of first daily launch. Must be in UTC. 23:00Z for when it is standard time, 00:00Z for when DST is in effect.
+LAUNCH_START_TIME="23:00Z"
 
 # Time between launches, starting at LAUNCH_START_TIME. Default is 12 for NWS launches (Twice a day at 00z and 12z)
 LAUNCH_STEP=12
