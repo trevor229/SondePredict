@@ -161,6 +161,7 @@ Prediction Run: 2020-11-05-1200Z,5.0,5.0
 - [x] Email notifications
 - [ ] Multi-location launch predictions & plotting
 - [ ] Discord integration?
+- [ ] Fix issue where last prediction path gets truncated sometimes
 
 ---
 ## Copyrights
