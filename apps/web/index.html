@@ -212,11 +212,6 @@
                             }
                         }
 
-                        // Add burst location markers to map
-                        new L.marker([curPath[index][0], curPath[index][1]], {
-                            icon: burstIcon
-                        }).addTo(map).bindPopup("<center>" + "Burst Altitude: " + largest + "m" + "<br>" + `${curPath[index][0]},${curPath[index][1]}` + "</center>");
-
                         // Split the prediction name by comma to make the popups look nice. Naming convention is from sonde_predict.py
                         var popupStringArr = current_pred_name.split(",");
 
@@ -230,6 +225,10 @@
                             ).addLayer(
                                 new L.polyline(current_pred_path)
                                 .bindPopup("<center>Launch Time: " + popupStringArr[0] + "<br>" + "Asc. Rate: " + popupStringArr[1] + "m/s" + " | " + "Desc. Rate: " + popupStringArr[2] + "m/s" + "</center>")
+                            ).addLayer(
+                                new L.marker([curPath[index][0], curPath[index][1]], {
+                                icon: burstIcon
+                                    }).addTo(map).bindPopup("<center>" + "Burst Altitude: " + largest + "m" + "<br>" + `${curPath[index][0]},${curPath[index][1]}` + "</center>")
                             )
                             .addTo(map);
                     }
